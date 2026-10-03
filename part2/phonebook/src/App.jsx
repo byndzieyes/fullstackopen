@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Notification from './components/Notification';
 
 const FilterInput = ({ filter, handleFilterChange }) => {
   return (
@@ -50,6 +51,7 @@ const App = () => {
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [filter, setFilter] = useState('');
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     axios.get('http://localhost:3001/persons').then((response) => {
@@ -86,6 +88,14 @@ const App = () => {
 
           setNewName('');
           setNewPhone('');
+          setNotification({
+            message: `Updated ${newName}`,
+            type: 'success',
+          });
+
+          setTimeout(() => {
+            setNotification(null);
+          }, 5000);
         });
       }
 
@@ -101,20 +111,54 @@ const App = () => {
       setPersons(persons.concat(response.data));
       setNewName('');
       setNewPhone('');
+      setNotification({
+        message: `Added ${newName}`,
+        type: 'success',
+      });
+
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
     });
   };
 
   const handleDelete = (id) => {
-    if (window.confirm(`Delete ${persons.find((p) => p.id === id).name}?`)) {
-      axios.delete(`http://localhost:3001/persons/${id}`).then(() => {
-        setPersons(persons.filter((p) => p.id !== id));
-      });
+    const personToDelete = persons.find((person) => person.id === id);
+
+    if (window.confirm(`Delete ${personToDelete.name}?`)) {
+      axios
+        .delete(`http://localhost:3001/persons/${id}`)
+        .then(() => {
+          setPersons(persons.filter((person) => person.id !== id));
+
+          setNotification({
+            message: `Deleted ${personToDelete.name}`,
+            type: 'success',
+          });
+
+          setTimeout(() => {
+            setNotification(null);
+          }, 5000);
+        })
+        .catch(() => {
+          setPersons(persons.filter((person) => person.id !== id));
+
+          setNotification({
+            message: `Information of ${personToDelete.name} has already been removed from server`,
+            type: 'error',
+          });
+
+          setTimeout(() => {
+            setNotification(null);
+          }, 5000);
+        });
     }
   };
 
   return (
     <div>
       <h1>Phonebook</h1>
+      <Notification notification={notification} />
       <FilterInput filter={filter} handleFilterChange={handleFilterChange} />
       <PersonForm
         addName={addName}
