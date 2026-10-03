@@ -29,7 +29,7 @@ const PersonForm = ({ addName, newName, handleNameChange, newPhone, handlePhoneC
   );
 };
 
-const DisplayPersons = ({ persons, filter }) => {
+const DisplayPersons = ({ persons, filter, handleDelete }) => {
   const filteredPersons = persons.filter((person) => person.name.toLowerCase().includes(filter.toLowerCase()));
 
   return (
@@ -38,6 +38,7 @@ const DisplayPersons = ({ persons, filter }) => {
       {filteredPersons.map((person) => (
         <p key={person.id}>
           {person.name} {person.number}
+          <button onClick={() => handleDelete(person.id)}>delete</button>
         </p>
       ))}
     </div>
@@ -71,19 +72,44 @@ const App = () => {
   const addName = (event) => {
     event.preventDefault();
 
-    if (persons.some((person) => person.name.toLowerCase() === newName.toLowerCase())) {
-      alert(`${newName} is already added to phonebook`);
+    const personToUpdate = persons.find((person) => person.name.toLowerCase() === newName.toLowerCase());
+
+    if (personToUpdate) {
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+        const updatedPerson = {
+          ...personToUpdate,
+          number: newPhone,
+        };
+
+        axios.put(`http://localhost:3001/persons/${personToUpdate.id}`, updatedPerson).then((response) => {
+          setPersons(persons.map((person) => (person.id === personToUpdate.id ? response.data : person)));
+
+          setNewName('');
+          setNewPhone('');
+        });
+      }
+
       return;
     }
 
     const nameObject = {
       name: newName,
       number: newPhone,
-      id: persons.length + 1,
     };
-    setPersons(persons.concat(nameObject));
-    setNewName('');
-    setNewPhone('');
+
+    axios.post('http://localhost:3001/persons', nameObject).then((response) => {
+      setPersons(persons.concat(response.data));
+      setNewName('');
+      setNewPhone('');
+    });
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm(`Delete ${persons.find((p) => p.id === id).name}?`)) {
+      axios.delete(`http://localhost:3001/persons/${id}`).then(() => {
+        setPersons(persons.filter((p) => p.id !== id));
+      });
+    }
   };
 
   return (
@@ -97,7 +123,7 @@ const App = () => {
         newPhone={newPhone}
         handlePhoneChange={handlePhoneChange}
       />
-      <DisplayPersons persons={persons} filter={filter} />
+      <DisplayPersons persons={persons} filter={filter} handleDelete={handleDelete} />
     </div>
   );
 };
