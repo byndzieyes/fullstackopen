@@ -9,11 +9,14 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "build:ui": "shx rm -rf dist && cd ../../part2/phonebook && npm run build && shx cp -r dist ../../part3/phonebookBackend"
   },
   "dependencies": {
-    "cors": "^2.8.6",
     "express": "^5.2.1",
     "morgan": "^1.12.1"
+  },
+  "devDependencies": {
+    "shx": "^0.4.0"
   }
 }
