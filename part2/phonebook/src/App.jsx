@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import Notification from './components/Notification';
+import personsService from './services/persons';
 
 const FilterInput = ({ filter, handleFilterChange }) => {
   return (
@@ -54,8 +54,8 @@ const App = () => {
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:3001/persons').then((response) => {
-      setPersons(response.data);
+    personsService.getAll().then((persons) => {
+      setPersons(persons);
     });
   }, []);
 
@@ -83,8 +83,8 @@ const App = () => {
           number: newPhone,
         };
 
-        axios.put(`http://localhost:3001/persons/${personToUpdate.id}`, updatedPerson).then((response) => {
-          setPersons(persons.map((person) => (person.id === personToUpdate.id ? response.data : person)));
+        personsService.update(personToUpdate.id, updatedPerson).then((returnedPerson) => {
+          setPersons(persons.map((person) => (person.id === personToUpdate.id ? returnedPerson : person)));
 
           setNewName('');
           setNewPhone('');
@@ -107,8 +107,8 @@ const App = () => {
       number: newPhone,
     };
 
-    axios.post('http://localhost:3001/persons', nameObject).then((response) => {
-      setPersons(persons.concat(response.data));
+    personsService.create(nameObject).then((returnedPerson) => {
+      setPersons(persons.concat(returnedPerson));
       setNewName('');
       setNewPhone('');
       setNotification({
@@ -126,8 +126,8 @@ const App = () => {
     const personToDelete = persons.find((person) => person.id === id);
 
     if (window.confirm(`Delete ${personToDelete.name}?`)) {
-      axios
-        .delete(`http://localhost:3001/persons/${id}`)
+      personsService
+        .remove(id)
         .then(() => {
           setPersons(persons.filter((person) => person.id !== id));
 
