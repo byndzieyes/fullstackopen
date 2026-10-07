@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
+import Person from './models/person.js';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 const app = express();
 
@@ -40,34 +42,36 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons', (req, res) => {
-  res.json(phonebook);
+  Person.find({}).then((persons) => {
+    res.json(persons);
+  });
 });
 
 app.get('/api/persons/:id', (req, res) => {
-  const id = req.params.id;
-  const person = phonebook.find((p) => p.id === id);
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
-  }
+  Person.findById(req.params.id).then((person) => {
+    if (person) {
+      res.json(person);
+    } else {
+      res.status(404).end();
+    }
+  });
 });
 
 app.post('/api/persons', (req, res) => {
   const { name, number } = req.body;
+
   if (!name || !number) {
     return res.status(400).json({ error: 'Name and number are required' });
   }
-  if (phonebook.some((person) => person.name === name)) {
-    return res.status(400).json({ error: 'Name must be unique' });
-  }
-  const newPerson = {
-    id: Math.floor(Math.random() * 1000000).toString(),
+
+  const person = new Person({
     name,
     number,
-  };
-  phonebook = [...phonebook, newPerson];
-  res.status(201).json(newPerson);
+  });
+
+  person.save().then((savedPerson) => {
+    res.status(201).json(savedPerson);
+  });
 });
 
 app.delete('/api/persons/:id', (req, res) => {

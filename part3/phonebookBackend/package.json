@@ -13,6 +13,7 @@
     "build:ui": "shx rm -rf dist && cd ../../part2/phonebook && npm run build && shx cp -r dist ../../part3/phonebookBackend"
   },
   "dependencies": {
+    "dotenv": "^18.0.6",
     "express": "^5.2.1",
     "mongoose": "^9.11.0",
     "morgan": "^1.12.1"
