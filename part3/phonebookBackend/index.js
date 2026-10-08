@@ -3,52 +3,31 @@ import express from 'express';
 import morgan from 'morgan';
 import Person from './models/person.js';
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3001;
 
 const app = express();
 
-app.use(express.json());
 app.use(express.static('dist'));
+app.use(express.json());
 
 morgan.token('body', (req) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
-let phonebook = [
-  {
-    id: '1',
-    name: 'Arto Hellas',
-    number: '040-123456',
-  },
-  {
-    id: '2',
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-  },
-  {
-    id: '3',
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-  },
-  {
-    id: '4',
-    name: 'Mary Poppendieck',
-    number: '39-23-6423122',
-  },
-];
-
 app.get('/info', (req, res) => {
-  const date = new Date();
-  res.send(`<p>Phonebook has info for ${phonebook.length} people</p><p>${date}</p>`);
+  return Person.countDocuments({}).then((count) => {
+    const date = new Date();
+    res.send(`<p>Phonebook has info for ${count} people</p><p>${date}</p>`);
+  });
 });
 
 app.get('/api/persons', (req, res) => {
-  Person.find({}).then((persons) => {
+  return Person.find({}).then((persons) => {
     res.json(persons);
   });
 });
 
 app.get('/api/persons/:id', (req, res) => {
-  Person.findById(req.params.id).then((person) => {
+  return Person.findById(req.params.id).then((person) => {
     if (person) {
       res.json(person);
     } else {
@@ -69,18 +48,51 @@ app.post('/api/persons', (req, res) => {
     number,
   });
 
-  person.save().then((savedPerson) => {
+  return person.save().then((savedPerson) => {
     res.status(201).json(savedPerson);
   });
 });
 
-app.delete('/api/persons/:id', (req, res) => {
-  const id = req.params.id;
+app.put('/api/persons/:id', (req, res) => {
+  const { name, number } = req.body;
 
-  phonebook = phonebook.filter((person) => person.id !== id);
+  return Person.findById(req.params.id).then((person) => {
+    if (!person) {
+      return res.status(404).end();
+    }
 
-  res.status(204).end();
+    person.name = name;
+    person.number = number;
+
+    return person.save().then((updatedPerson) => {
+      res.json(updatedPerson);
+    });
+  });
 });
+
+app.delete('/api/persons/:id', (req, res) => {
+  return Person.findByIdAndDelete(req.params.id).then((result) => {
+    res.status(204).end();
+  });
+});
+
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: 'unknown endpoint' });
+};
+
+app.use(unknownEndpoint);
+
+const errorHandler = (err, req, res, next) => {
+  console.error(err.message);
+
+  if (err.name === 'CastError') {
+    return res.status(400).send({ error: 'malformatted id' });
+  }
+
+  next(err);
+};
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
