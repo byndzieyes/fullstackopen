@@ -71,7 +71,7 @@ app.put('/api/persons/:id', (req, res) => {
 });
 
 app.delete('/api/persons/:id', (req, res) => {
-  return Person.findByIdAndDelete(req.params.id).then((result) => {
+  return Person.findByIdAndDelete(req.params.id).then(() => {
     res.status(204).end();
   });
 });
