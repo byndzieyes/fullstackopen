@@ -57,6 +57,42 @@ describe('Blog API tests', () => {
     assert.equal(blogsAtEnd.length, initialBlogs.length + 1);
     assert.ok(blogsAtEnd.some((blog) => blog.title === newBlog.title));
   });
+
+  test('POST /api/blogs defaults likes to 0 if missing', async () => {
+    const response = await api
+      .post('/api/blogs')
+      .send({
+        title: 'Blog without likes',
+        author: 'Some Author',
+        url: 'https://example.com',
+      })
+      .expect(201);
+
+    const savedBlog = await Blog.findById(response.body.id);
+
+    assert.ok(savedBlog);
+    assert.equal(savedBlog.likes, 0);
+  });
+
+  test('POST /api/blogs fails with status code 400 if title is missing', async () => {
+    const newBlogWithoutTitle = {
+      author: 'Some Author',
+      url: 'https://example.com',
+      likes: 5,
+    };
+
+    await api.post('/api/blogs').send(newBlogWithoutTitle).expect(400);
+  });
+
+  test('POST /api/blogs fails with status code 400 if url is missing', async () => {
+    const newBlogWithoutUrl = {
+      title: 'Blog without url',
+      author: 'Some Author',
+      likes: 5,
+    };
+
+    await api.post('/api/blogs').send(newBlogWithoutUrl).expect(400);
+  });
 });
 
 after(async () => {
