@@ -3,6 +3,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import logger from './utils/logger.js';
 import blogsRouter from './controllers/blogs.js';
+import usersRouter from './controllers/users.js';
 import { requestLogger, unknownEndpoint, errorHandler } from './utils/middleware.js';
 
 const app = express();
@@ -20,7 +21,7 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.use('/api/blogs', blogsRouter);
-
+app.use('/api/users', usersRouter);
 app.use(unknownEndpoint);
 app.use(errorHandler);
 
